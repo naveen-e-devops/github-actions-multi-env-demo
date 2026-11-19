@@ -1,6 +1,6 @@
 # GitHub Actions Multi-Environment Demo
 
-A minimal GitHub Actions example with independent DEV, STAGE, and PROD job chains.
+A minimal GitHub Actions example with separate DEV, STAGE, and PROD job chains.
 
 ## Workflow
 
@@ -8,22 +8,28 @@ Workflow file: `.github/workflows/multi-env-pipeline.yml`
 
 Each environment has four sequential jobs:
 
-1. **CI** — prints a sample CI-started message.
-2. **Test** — prints sample Checkov scan, Sonar CI scan, and unit-test messages.
-3. **Build** — prints a sample build message.
-4. **Deploy** — prints a sample deployment message.
+1. **CI** — sample initialization message.
+2. **Test** — sample Checkov scan, Sonar CI scan, and unit-test messages.
+3. **Build** — sample build message.
+4. **Deploy** — sample deployment message.
 
 Every step uses `echo` only. No real scanning, testing, building, or deployment is performed.
 
-## Branch behavior
+## Trigger behavior
 
-| Branch | DEV | STAGE | PROD |
+| Event / selected branch | DEV | STAGE | PROD |
 | --- | --- | --- | --- |
-| Default branch (`main`) | Yes | Yes | Yes |
-| Feature branches (`feature/**`) | Yes | Yes | No |
-| Other branches | No | No | No |
+| Push to default branch (`main`) | Automatic | Manual only | Manual only |
+| Push to `feature/**` | Automatic | Manual only | Not available |
+| Manual run on `main`, select STAGE | No | Runs | No |
+| Manual run on `main`, select PROD | No | No | Runs |
+| Manual run on feature branch, select STAGE | No | Runs | No |
 
-The workflow runs on pushes to `main` and `feature/**`, and can also be started manually with `workflow_dispatch`. For manual runs, the selected branch determines which environment jobs run.
+- Pushes to `main` and `feature/**` automatically start DEV.
+- STAGE and PROD are opt-in through **Actions → Multi-Environment CI-CD Pipeline → Run workflow**.
+- On the manual run form, select `run_stage` to run STAGE or `run_prod` to run PROD.
+- PROD is restricted to `main`. STAGE is available on the default branch and `feature/**` branches.
+- If you manually select both inputs on `main`, both STAGE and PROD run.
 
 ## GitHub Environments
 
@@ -37,7 +43,8 @@ For production, consider requiring reviewer approval and restricting deployment 
 
 ## GitHub Actions components demonstrated
 
-- Workflow name and triggers: `push`, `workflow_dispatch`
+- Workflow triggers: `push`, `workflow_dispatch`
+- Manual boolean inputs
 - Workflow-level token permissions
 - Multiple jobs and Ubuntu runners
 - Steps and shell commands
@@ -47,6 +54,7 @@ For production, consider requiring reviewer approval and restricting deployment 
 
 ## Try it
 
-- Push a commit to `main`: DEV, STAGE, and PROD job chains run.
-- Push a commit to a branch such as `feature/demo`: DEV and STAGE job chains run.
-- Start a manual run from **Actions → Multi-Environment CI-CD Pipeline → Run workflow** and select `main` or a feature branch.
+1. Push a commit to `main` or `feature/demo`: DEV runs automatically.
+2. Open the Actions tab and select **Multi-Environment CI-CD Pipeline → Run workflow**.
+3. Select the branch and enable `run_stage` to run STAGE.
+4. Select `main` and enable `run_prod` to run PROD.
