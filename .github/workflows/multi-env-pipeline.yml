@@ -6,6 +6,17 @@ on:
       - main
       - 'feature/**'
   workflow_dispatch:
+    inputs:
+      run_stage:
+        description: "Manually run the STAGE pipeline"
+        required: false
+        default: false
+        type: boolean
+      run_prod:
+        description: "Manually run the PROD pipeline (main branch only)"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -15,7 +26,7 @@ jobs:
   dev-ci:
     name: DEV - CI
     runs-on: ubuntu-latest
-    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/')
+    if: github.event_name == 'workflow_dispatch' && inputs.run_stage == true && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/'))
     steps:
       - name: CI
         run: echo "DEV - CI pipeline started"
@@ -24,7 +35,7 @@ jobs:
     name: DEV - Test
     runs-on: ubuntu-latest
     needs: dev-ci
-    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/')
+    if: github.event_name == 'workflow_dispatch' && inputs.run_stage == true && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/'))
     steps:
       - name: Checkov scan
         run: echo "DEV - Running Checkov security scan"
@@ -39,7 +50,7 @@ jobs:
     name: DEV - Build
     runs-on: ubuntu-latest
     needs: dev-test
-    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/')
+    if: github.event_name == 'workflow_dispatch' && inputs.run_stage == true && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/'))
     steps:
       - name: Build
         run: echo "DEV - Building application"
@@ -48,7 +59,7 @@ jobs:
     name: DEV - Deploy
     runs-on: ubuntu-latest
     needs: dev-build
-    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/')
+    if: github.event_name == 'workflow_dispatch' && inputs.run_stage == true && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/'))
     environment: dev
     steps:
       - name: Deploy
@@ -58,7 +69,7 @@ jobs:
   stage-ci:
     name: STAGE - CI
     runs-on: ubuntu-latest
-    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/')
+    if: github.event_name == 'workflow_dispatch' && inputs.run_stage == true && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/'))
     steps:
       - name: CI
         run: echo "STAGE - CI pipeline started"
@@ -67,7 +78,7 @@ jobs:
     name: STAGE - Test
     runs-on: ubuntu-latest
     needs: stage-ci
-    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/')
+    if: github.event_name == 'workflow_dispatch' && inputs.run_stage == true && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/'))
     steps:
       - name: Checkov scan
         run: echo "STAGE - Running Checkov security scan"
@@ -82,7 +93,7 @@ jobs:
     name: STAGE - Build
     runs-on: ubuntu-latest
     needs: stage-test
-    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/')
+    if: github.event_name == 'workflow_dispatch' && inputs.run_stage == true && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/'))
     steps:
       - name: Build
         run: echo "STAGE - Building application"
@@ -91,7 +102,7 @@ jobs:
     name: STAGE - Deploy
     runs-on: ubuntu-latest
     needs: stage-build
-    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/')
+    if: github.event_name == 'workflow_dispatch' && inputs.run_stage == true && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/'))
     environment: stage
     steps:
       - name: Deploy
@@ -101,7 +112,7 @@ jobs:
   prod-ci:
     name: PROD - CI
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && inputs.run_prod == true && github.ref == 'refs/heads/main'
     steps:
       - name: CI
         run: echo "PROD - CI pipeline started"
@@ -110,7 +121,7 @@ jobs:
     name: PROD - Test
     runs-on: ubuntu-latest
     needs: prod-ci
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && inputs.run_prod == true && github.ref == 'refs/heads/main'
     steps:
       - name: Checkov scan
         run: echo "PROD - Running Checkov security scan"
@@ -125,7 +136,7 @@ jobs:
     name: PROD - Build
     runs-on: ubuntu-latest
     needs: prod-test
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && inputs.run_prod == true && github.ref == 'refs/heads/main'
     steps:
       - name: Build
         run: echo "PROD - Building application"
@@ -134,7 +145,7 @@ jobs:
     name: PROD - Deploy
     runs-on: ubuntu-latest
     needs: prod-build
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && inputs.run_prod == true && github.ref == 'refs/heads/main'
     environment: prod
     steps:
       - name: Deploy
