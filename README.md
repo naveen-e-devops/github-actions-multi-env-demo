@@ -17,19 +17,18 @@ Every step uses `echo` only. No real scanning, testing, building, or deployment 
 
 ## Trigger behavior
 
-| Event / selected branch | DEV | STAGE | PROD |
+| Event / ref | DEV | STAGE | PROD |
 | --- | --- | --- | --- |
-| Push to default branch (`main`) | Automatic | Manual only | Manual only |
+| Push to default branch (`main`) | Automatic | Manual only | Automatic |
 | Push to `feature/**` | Automatic | Manual only | Not available |
-| Manual run on `main`, select STAGE | No | Runs | No |
-| Manual run on `main`, select PROD | No | No | Runs |
-| Manual run on feature branch, select STAGE | No | Runs | No |
+| Push a tag (for example, `v1.0.0`) | Not available | Not available | Automatic |
+| Manual run on default or feature branch, select STAGE | No | Runs | No |
 
 - Pushes to `main` and `feature/**` automatically start DEV.
-- STAGE and PROD are opt-in through **Actions → Multi-Environment CI-CD Pipeline → Run workflow**.
-- On the manual run form, select `run_stage` to run STAGE or `run_prod` to run PROD.
-- PROD is restricted to `main`. STAGE is available on the default branch and `feature/**` branches.
-- If you manually select both inputs on `main`, both STAGE and PROD run.
+- STAGE is opt-in through **Actions → Multi-Environment CI-CD Pipeline → Run workflow**, using the `run_stage` boolean input. It is available on the default branch and `feature/**` branches.
+- PROD runs automatically when code is pushed to `main` or when any Git tag is pushed.
+- PROD does not have a manual input.
+- PROD is not run from feature branches.
 
 ## GitHub Environments
 
@@ -39,12 +38,12 @@ Create these environments under **Repository → Settings → Environments**:
 - `stage`
 - `prod`
 
-For production, consider requiring reviewer approval and restricting deployment branches to `main`.
+For production, consider requiring reviewer approval and restricting deployment branches to `main` and the tag patterns you use for releases.
 
 ## GitHub Actions components demonstrated
 
 - Workflow triggers: `push`, `workflow_dispatch`
-- Manual boolean inputs
+- Manual boolean input for STAGE
 - Workflow-level token permissions
 - Multiple jobs and Ubuntu runners
 - Steps and shell commands
@@ -54,7 +53,12 @@ For production, consider requiring reviewer approval and restricting deployment 
 
 ## Try it
 
-1. Push a commit to `main` or `feature/demo`: DEV runs automatically.
-2. Open the Actions tab and select **Multi-Environment CI-CD Pipeline → Run workflow**.
-3. Select the branch and enable `run_stage` to run STAGE.
-4. Select `main` and enable `run_prod` to run PROD.
+1. Push a commit to `main`: DEV and PROD run automatically.
+2. Push a commit to `feature/demo`: DEV runs automatically.
+3. Open the Actions tab and select **Multi-Environment CI-CD Pipeline → Run workflow**. Select a default or feature branch and enable `run_stage`.
+4. Create and push a release tag to trigger PROD:
+
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
