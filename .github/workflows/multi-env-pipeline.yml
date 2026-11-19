@@ -1,0 +1,141 @@
+name: Multi-Environment CI-CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # DEV: default branch (main) and feature branches
+  dev-ci:
+    name: DEV - CI
+    runs-on: ubuntu-latest
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/')
+    steps:
+      - name: CI
+        run: echo "DEV - CI pipeline started"
+
+  dev-test:
+    name: DEV - Test
+    runs-on: ubuntu-latest
+    needs: dev-ci
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/')
+    steps:
+      - name: Checkov scan
+        run: echo "DEV - Running Checkov security scan"
+
+      - name: Sonar CI scan
+        run: echo "DEV - Running Sonar CI scan"
+
+      - name: Unit tests
+        run: echo "DEV - Running unit tests"
+
+  dev-build:
+    name: DEV - Build
+    runs-on: ubuntu-latest
+    needs: dev-test
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/')
+    steps:
+      - name: Build
+        run: echo "DEV - Building application"
+
+  dev-deploy:
+    name: DEV - Deploy
+    runs-on: ubuntu-latest
+    needs: dev-build
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/')
+    environment: dev
+    steps:
+      - name: Deploy
+        run: echo "DEV - Deploying application"
+
+  # STAGE: default branch (main) and feature branches
+  stage-ci:
+    name: STAGE - CI
+    runs-on: ubuntu-latest
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/')
+    steps:
+      - name: CI
+        run: echo "STAGE - CI pipeline started"
+
+  stage-test:
+    name: STAGE - Test
+    runs-on: ubuntu-latest
+    needs: stage-ci
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/')
+    steps:
+      - name: Checkov scan
+        run: echo "STAGE - Running Checkov security scan"
+
+      - name: Sonar CI scan
+        run: echo "STAGE - Running Sonar CI scan"
+
+      - name: Unit tests
+        run: echo "STAGE - Running unit tests"
+
+  stage-build:
+    name: STAGE - Build
+    runs-on: ubuntu-latest
+    needs: stage-test
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/')
+    steps:
+      - name: Build
+        run: echo "STAGE - Building application"
+
+  stage-deploy:
+    name: STAGE - Deploy
+    runs-on: ubuntu-latest
+    needs: stage-build
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || startsWith(github.ref, 'refs/heads/feature/')
+    environment: stage
+    steps:
+      - name: Deploy
+        run: echo "STAGE - Deploying application"
+
+  # PROD: main branch only
+  prod-ci:
+    name: PROD - CI
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: CI
+        run: echo "PROD - CI pipeline started"
+
+  prod-test:
+    name: PROD - Test
+    runs-on: ubuntu-latest
+    needs: prod-ci
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkov scan
+        run: echo "PROD - Running Checkov security scan"
+
+      - name: Sonar CI scan
+        run: echo "PROD - Running Sonar CI scan"
+
+      - name: Unit tests
+        run: echo "PROD - Running unit tests"
+
+  prod-build:
+    name: PROD - Build
+    runs-on: ubuntu-latest
+    needs: prod-test
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Build
+        run: echo "PROD - Building application"
+
+  prod-deploy:
+    name: PROD - Deploy
+    runs-on: ubuntu-latest
+    needs: prod-build
+    if: github.ref == 'refs/heads/main'
+    environment: prod
+    steps:
+      - name: Deploy
+        run: echo "PROD - Deploying application"
