@@ -5,15 +5,12 @@ on:
     branches:
       - main
       - 'feature/**'
+    tags:
+      - '**'
   workflow_dispatch:
     inputs:
       run_stage:
         description: "Manually run the STAGE pipeline"
-        required: false
-        default: false
-        type: boolean
-      run_prod:
-        description: "Manually run the PROD pipeline (main branch only)"
         required: false
         default: false
         type: boolean
@@ -112,7 +109,7 @@ jobs:
   prod-ci:
     name: PROD - CI
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && inputs.run_prod == true && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref_type == 'tag')
     steps:
       - name: CI
         run: echo "PROD - CI pipeline started"
@@ -121,7 +118,7 @@ jobs:
     name: PROD - Test
     runs-on: ubuntu-latest
     needs: prod-ci
-    if: github.event_name == 'workflow_dispatch' && inputs.run_prod == true && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref_type == 'tag')
     steps:
       - name: Checkov scan
         run: echo "PROD - Running Checkov security scan"
@@ -136,7 +133,7 @@ jobs:
     name: PROD - Build
     runs-on: ubuntu-latest
     needs: prod-test
-    if: github.event_name == 'workflow_dispatch' && inputs.run_prod == true && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref_type == 'tag')
     steps:
       - name: Build
         run: echo "PROD - Building application"
@@ -145,7 +142,7 @@ jobs:
     name: PROD - Deploy
     runs-on: ubuntu-latest
     needs: prod-build
-    if: github.event_name == 'workflow_dispatch' && inputs.run_prod == true && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref_type == 'tag')
     environment: prod
     steps:
       - name: Deploy
